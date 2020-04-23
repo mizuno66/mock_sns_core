@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using mock_sns_core2.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using mock_sns_core2.Hubs;
 
 namespace mock_sns_core2
 {
@@ -41,6 +42,8 @@ namespace mock_sns_core2
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +65,11 @@ namespace mock_sns_core2
             app.UseCookiePolicy();
 
             app.UseAuthentication();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<ArticleHub>("/articleHub");
+            });
 
             app.UseMvc(routes =>
             {
