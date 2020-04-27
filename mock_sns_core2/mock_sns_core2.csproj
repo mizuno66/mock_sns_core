@@ -34,6 +34,7 @@
   <ItemGroup>
     <Folder Include="Hubs\" />
     <Folder Include="Services\" />
+    <Folder Include="Data\Migrations\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Areas\Identity\Pages\_ValidationScriptsPartial.cshtml" />
