@@ -2,7 +2,7 @@
 @model LoginModel
 
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "ログイン";
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -10,13 +10,13 @@
     <div class="col-md-4">
         <section>
             <form method="post">
-                <h4>Use a local account to log in.</h4>
+                <h4>ログイン</h4>
                 <hr />
                 <div asp-validation-summary="All" class="text-danger"></div>
                 <div class="form-group">
-                    <label asp-for="Input.Email"></label>
-                    <input asp-for="Input.Email" class="form-control" />
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    <label asp-for="Input.UserName"></label>
+                    <input asp-for="Input.UserName" class="form-control" />
+                    <span asp-validation-for="Input.UserName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="Input.Password"></label>
@@ -32,12 +32,14 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-default">Log in</button>
+                    <button type="submit" class="btn btn-default">ログイン</button>
                 </div>
                 <div class="form-group">
+                    @*
                     <p>
                         <a asp-page="./ForgotPassword">Forgot your password?</a>
                     </p>
+                    *@
                     <p>
                         <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
                     </p>

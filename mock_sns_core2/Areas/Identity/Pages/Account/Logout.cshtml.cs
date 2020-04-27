@@ -7,16 +7,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using mock_sns_core2.Models;
 
 namespace mock_sns_core2.Areas.Identity.Pages.Account
 {
     [AllowAnonymous]
     public class LogoutModel : PageModel
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LogoutModel> _logger;
 
-        public LogoutModel(SignInManager<IdentityUser> signInManager, ILogger<LogoutModel> logger)
+        public LogoutModel(SignInManager<ApplicationUser> signInManager, ILogger<LogoutModel> logger)
         {
             _signInManager = signInManager;
             _logger = logger;
@@ -30,14 +31,17 @@ namespace mock_sns_core2.Areas.Identity.Pages.Account
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
-            if (returnUrl != null)
-            {
-                return LocalRedirect(returnUrl);
-            }
-            else
-            {
-                return Page();
-            }
+            
+            return LocalRedirect(returnUrl ?? Url.Content("~/"));
+
+            //if (returnUrl != null)
+            //{
+            //    return LocalRedirect(returnUrl);
+            //}
+            //else
+            //{
+            //    return Page();
+            //}
         }
     }
 }

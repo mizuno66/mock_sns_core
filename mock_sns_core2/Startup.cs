@@ -13,6 +13,7 @@ using mock_sns_core2.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using mock_sns_core2.Hubs;
+using mock_sns_core2.Models;
 
 namespace mock_sns_core2
 {
@@ -24,10 +25,13 @@ namespace mock_sns_core2
         }
 
         public IConfiguration Configuration { get; }
+        public static string ConnectionString { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            ConnectionString = Configuration.GetConnectionString("DefaultConnection");
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -38,7 +42,7 @@ namespace mock_sns_core2
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseOracle(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>()
+            services.AddDefaultIdentity<ApplicationUser>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
