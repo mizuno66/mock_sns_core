@@ -36,18 +36,18 @@ namespace mock_sns_core2.Areas.Identity.Pages.Account.Manage
         {
             [Required]
             [DataType(DataType.Password)]
-            [Display(Name = "Current password")]
+            [Display(Name = "現在のパスワード")]
             public string OldPassword { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "新しいパスワードは6〜100文字で入力してください。", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "New password")]
+            [Display(Name = "新しいパスワード")]
             public string NewPassword { get; set; }
 
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm new password")]
-            [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+            [Display(Name = "新しいパスワード（確認用）")]
+            [Compare("NewPassword", ErrorMessage = "入力されたパスワードが一致しません。")]
             public string ConfirmPassword { get; set; }
         }
 
@@ -56,7 +56,7 @@ namespace mock_sns_core2.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"ユーザID：'{_userManager.GetUserId(User)}'が読み込めませんでした。");
             }
 
             var hasPassword = await _userManager.HasPasswordAsync(user);
@@ -78,7 +78,7 @@ namespace mock_sns_core2.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"ユーザID：'{_userManager.GetUserId(User)}'が読み込めませんでした。");
             }
 
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
@@ -93,7 +93,7 @@ namespace mock_sns_core2.Areas.Identity.Pages.Account.Manage
 
             await _signInManager.RefreshSignInAsync(user);
             _logger.LogInformation("User changed their password successfully.");
-            StatusMessage = "Your password has been changed.";
+            StatusMessage = "パスワードを変更しました。";
 
             return RedirectToPage();
         }
