@@ -50,7 +50,7 @@
                         <div class="caption">
                             <h5>現在の画像</h5>
                         </div>
-                        <img src="@Url.Action("DispPhotoAsync", "Home")" alt="Photo" asp-append-version="true" />
+                        <img src="/Home/UserPhoto/@User.Identity.Name" alt="Photo" asp-append-version="true" />
                     </div>
                 </div>
                 <div class="col-xs-6">

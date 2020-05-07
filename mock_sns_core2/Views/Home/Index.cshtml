@@ -7,7 +7,7 @@
         <div class="row">
             <div class="col-6">&nbsp;</div>
             <div class="col-6">
-                User..........<input type="text" id="userInput" />
+                <input type="hidden" id="userInput" value="@User.Identity.Name" />
                 <br />
                 Message...<input type="text" id="messageInput" />
                 <input type="button" id="sendButton" value="Send Message" />
@@ -21,7 +21,21 @@
         <div class="row">
             <div class="col-6">&nbsp;</div>
             <div class="col-6">
-                <ul id="messagesList"></ul>
+                <div id="messagesList"></div>
+                @foreach(var article in ViewBag.list)
+                {
+                    <div class="media">
+                        <a href="#" class="media-left">
+                            <img src="/Home/UserPhoto/@article.User.UserName" width="150" height="150" />
+                        </a>
+                        <div class="media-body" id=@article.Id>
+                            <h4 class="media-heading">
+                                @article.User.ApplicationUserName
+                            </h4>
+                            <div>@article.Text</div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     </div>

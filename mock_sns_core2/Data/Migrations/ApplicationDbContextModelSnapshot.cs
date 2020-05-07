@@ -165,6 +165,9 @@ namespace mock_sns_core2.Data.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed");
 
+                    b.Property<byte[]>("Photo")
+                        .HasMaxLength(2097152);
+
                     b.Property<string>("SecurityStamp");
 
                     b.Property<bool>("TwoFactorEnabled");
