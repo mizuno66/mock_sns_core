@@ -2,27 +2,32 @@
     ViewData["Title"] = "Home Page";
 }
 
-    <div class="container">
-        <div class="row">&nbsp;</div>
-        <div class="row">
-            <div class="col-6">&nbsp;</div>
-            <div class="col-6">
-                <input type="hidden" id="userInput" value="@User.Identity.Name" />
-                <br />
-                Message...<input type="text" id="messageInput" />
-                <input type="button" id="sendButton" value="Send Message" />
-            </div>
+<div class="container">
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div class="col-6">&nbsp;</div>
+        <div class="col-6">
+            <input type="hidden" id="userInput" value="@User.Identity.Name" />
+            <br />
+            Message...<input type="text" id="messageInput" />
+            <input type="button" id="sendButton" value="Send Message" />
         </div>
-        <div class="row">
-            <div class="col-12">
-                <hr />
-            </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <hr />
         </div>
-        <div class="row">
-            <div class="col-6">&nbsp;</div>
-            <div class="col-6">
-                <div id="messagesList"></div>
-                @foreach(var article in ViewBag.list)
+    </div>
+    @{
+        var list = ViewBag.list;
+        var nextDisabled = !list.HasNextPage ? "disabled" : "";
+        var active = "";
+    }
+    <div class="row">
+        <div class="col-6">&nbsp;</div>
+        <div class="col-6">
+            <div id="messagesList" class="scroll">
+                @foreach (var article in list)
                 {
                     <div class="media">
                         <a href="#" class="media-left">
@@ -40,5 +45,48 @@
         </div>
     </div>
 
-<script src="~/js/signalr/dist/browser/signalr.js"></script>
-<script src="~/js/articleSend.js"></script>
+    <nav aria-label="">
+        <ul class="pagination">
+            @if (list.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index - 1)" class="page-link">前</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <a href="#" class="page-link">前</a>
+                </li>
+            }
+
+            @for (int i = 1; i < list.Total + 1; i++)
+            {
+                active = list.Index == i ? "active" : "";
+                <li class="page-item @active">
+                    <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@i" class="page-link">@i</a>
+                </li>
+            }
+
+            @if (list.HasNextPage)
+            {
+                <li class="page-item">
+                    <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index + 1)" class="page-link">次</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <a href="#" class="page-link">次</a>
+                </li>
+            }
+
+        </ul>
+    </nav>
+</div>
+
+@section Scripts{
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/articleSend.js"></script>
+}
+

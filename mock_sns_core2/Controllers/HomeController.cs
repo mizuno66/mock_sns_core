@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using mock_sns_core2.Models;
+using mock_sns_core2.Services;
 
 namespace mock_sns_core2.Controllers
 {
@@ -24,18 +25,21 @@ namespace mock_sns_core2.Controllers
         [Route("")]
         [Route("Index")]
         [Authorize]
-        public async Task<IActionResult> IndexAsync()
+        public async Task<IActionResult> IndexAsync(int? pageNum)
         {
             var user = await _userManager.GetUserAsync(User);
-
             ViewBag.ApplicationUserName = user.ApplicationUserName;
+
+            ViewData["pageNum"] = pageNum ?? 1;
 
             string sql = "select * from Article " +
                 " inner join \"AspNetUsers\" " +
                 " On Article.UserId = \"AspNetUsers\".\"Id\" " +
                 " where Article.UserId = :UserId " +
                 " order by PostDate desc";
-            ViewBag.list = await new Article().search(sql, new { UserId = user.Id });
+
+            var list = await new Article().search(sql, new { UserId = user.Id });
+            ViewBag.list = PaginatedService<Article>.Create(list, pageNum ?? 1, 5);
             
             return View("Index");
         }
