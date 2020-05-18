@@ -26,11 +26,13 @@ namespace mock_sns_core2
 
         public IConfiguration Configuration { get; }
         public static string ConnectionString { get; set; }
+        public static string StoredFilePath { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             ConnectionString = Configuration.GetConnectionString("DefaultConnection");
+            StoredFilePath = Configuration["StoredFilePath"];
 
             services.Configure<CookiePolicyOptions>(options =>
             {
