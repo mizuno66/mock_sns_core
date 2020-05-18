@@ -3,6 +3,7 @@ for details on configuring this project to bundle and minify static web assets. 
 body {
     padding-top: 50px;
     padding-bottom: 20px;
+    font-size: 16px;
 }
 
 /* Wrapping element */
@@ -34,4 +35,39 @@ body {
     .carousel-caption {
         display: none;
     }
+}
+
+/* 画像 */
+.userphoto {
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    background-position: center;
+    background-size: cover;
+}
+
+/* 投稿 */
+.media{
+    border: solid thin #bfbfbf;
+    padding:10px;
+    margin: 0px;
+}
+
+/* 投稿入力エリア */
+#messageInput {
+    width: 90%;
+}
+
+/* ファイル選択 */
+#image-select {
+    display: none;
+}
+
+/* 画像アイコン */
+.image-icon {
+    font-size: 32px;
+}
+.image-icon:hover {
+    opacity: 0.5;
+    cursor: pointer;
 }

@@ -1,92 +1,127 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
-
+<br />
 <div class="container">
-    <div class="row">&nbsp;</div>
-    <div class="row">
-        <div class="col-6">&nbsp;</div>
-        <div class="col-6">
-            <input type="hidden" id="userInput" value="@User.Identity.Name" />
-            <br />
-            Message...<input type="text" id="messageInput" />
-            <input type="button" id="sendButton" value="Send Message" />
+    <div class="row ">
+        <div class="col-md-2">
+            <img src="/Home/UserPhoto/@User.Identity.Name" class="userphoto" />
         </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <hr />
+        <div class="col-md-9">
+            <form class="article-form" enctype="multipart/form-data" action="UploadPhysical" method="post" onsubmit="FetchSubmit(this); return false;">
+                <div class="form-group">
+                    <textarea id="messageInput" maxlength="300" class="form-control" name="messageInput"></textarea>
+                </div>
+                <div id="preview">
+                </div>
+                <label>
+                    <span class="glyphicon glyphicon-picture image-icon" aria-hidden="true">
+                        <input type="file" multiple accept=".jpg,.gif,.png,image/jpeg,image/gif,image/png" id="image-select" name="files" />
+                    </span>
+                </label>
+                <input type="submit" id="sendButton" class="btn btn-primary" value="投稿" />
+                <input type="hidden" id="userInput" name="userInput" value="@User.Identity.Name" />
+            </form>
         </div>
+        <hr />
     </div>
     @{
         var list = ViewBag.list;
-        var nextDisabled = !list.HasNextPage ? "disabled" : "";
-        var active = "";
+        //var active = "";
     }
     <div class="row">
-        <div class="col-6">&nbsp;</div>
         <div class="col-6">
             <div id="messagesList" class="scroll">
                 @foreach (var article in list)
                 {
-                    <div class="media">
-                        <a href="#" class="media-left">
-                            <img src="/Home/UserPhoto/@article.User.UserName" width="150" height="150" />
-                        </a>
+                    <article class="media">
+                        <div class="media-left">
+                            <img src="/Home/UserPhoto/@article.User.UserName" class="userphoto" />
+                        </div>
                         <div class="media-body" id=@article.Id>
                             <h4 class="media-heading">
                                 @article.User.ApplicationUserName
                             </h4>
                             <div>@article.Text</div>
                         </div>
-                    </div>
+                    </article>
                 }
+                <nav>
+                    @if (list.HasNextPage)
+                    {
+                        <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index + 1)" class="next">次</a>
+                    }
+                </nav>
             </div>
         </div>
     </div>
 
-    <nav aria-label="">
-        <ul class="pagination">
-            @if (list.HasPreviousPage)
-            {
-                <li class="page-item">
-                    <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index - 1)" class="page-link">前</a>
-                </li>
-            }
-            else
-            {
-                <li class="page-item disabled">
-                    <a href="#" class="page-link">前</a>
-                </li>
-            }
 
-            @for (int i = 1; i < list.Total + 1; i++)
-            {
-                active = list.Index == i ? "active" : "";
-                <li class="page-item @active">
-                    <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@i" class="page-link">@i</a>
-                </li>
-            }
+    @*
+        <nav aria-label="">
+            <ul class="pagination">
+                @if (list.HasPreviousPage)
+                {
+                    <li class="page-item">
+                        <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index - 1)" class="page-link">前</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled">
+                        <a href="#" class="page-link">前</a>
+                    </li>
+                }
 
-            @if (list.HasNextPage)
-            {
-                <li class="page-item">
-                    <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index + 1)" class="page-link">次</a>
-                </li>
-            }
-            else
-            {
-                <li class="page-item disabled">
-                    <a href="#" class="page-link">次</a>
-                </li>
-            }
+                @for (int i = 1; i < list.Total + 1; i++)
+                {
+                    active = list.Index == i ? "active" : "";
+                    <li class="page-item @active">
+                        <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@i" class="page-link">@i</a>
+                    </li>
+                }
 
-        </ul>
-    </nav>
+                @if (list.HasNextPage)
+                {
+                    <li class="page-item">
+                        <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index + 1)" class="page-link">次</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled">
+                        <a href="#" class="page-link">次</a>
+                    </li>
+                }
+
+            </ul>
+        </nav>
+    *@
 </div>
-
 @section Scripts{
     <script src="~/js/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/articleSend.js"></script>
+    <script src="~/js/preview.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js"></script>
+    <script type="text/javascript">$(function () {
+            $('.scroll').jscroll({
+                loadingHtml: '<p style="text-align:center"><img src="/images/loading.gif" /></p>',
+                contentSelector: '.scroll',
+                nextSelector: 'a.next',
+                autoTrigger: true
+            })
+        });</script>
+    <script type="text/javascript">
+        $(function () {
+            $('#messageInput').on('change keyup keydown paste cut', function () {
+                if ($(this).outerHeight() > this.scrollHeight) {
+                    $(this).height(1)
+                }
+                while ($(this).outerHeight() < this.scrollHeight) {
+                    $(this).height($(this).height() + 1)
+                }
+            });
+        });
+    </script>
 }
 
