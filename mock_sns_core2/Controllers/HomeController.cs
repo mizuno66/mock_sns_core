@@ -34,13 +34,14 @@ namespace mock_sns_core2.Controllers
 
             ViewData["pageNum"] = pageNum ?? 1;
 
-            string sql = "select * from Article " +
-                " inner join \"AspNetUsers\" " +
-                " On Article.UserId = \"AspNetUsers\".\"Id\" " +
-                " where Article.UserId = :UserId " +
+            string sql = " where Article.UserId = :UserId " +
                 " order by PostDate desc";
 
-            var list = await new Article().search(sql, new { UserId = user.Id });
+            var dbcs = new DbConnectionService();
+            dbcs.Open();
+            var list = await new Article().search(dbcs, sql, new { UserId = user.Id });
+            dbcs.Close();
+
             ViewBag.list = PaginatedService<Article>.Create(list, pageNum ?? 1, 8);
             
             return View("Index");
@@ -53,6 +54,13 @@ namespace mock_sns_core2.Controllers
             user = await user.getUserAsync(UserName);
 
             return new FileContentResult(user.Photo, "image/jpeg");
+        }
+
+        [Route("Content/{UserName}/{FileName}")]
+        public async Task<IActionResult> DispContentsAsync(string UserName, string fileName)
+        {
+            byte[] data = await System.IO.File.ReadAllBytesAsync(Path.Combine(Startup.StoredFilePath, fileName));
+            return new FileContentResult(data, "image/jpeg");
         }
 
         [Route("About")]
@@ -86,20 +94,28 @@ namespace mock_sns_core2.Controllers
 
         [Route("UploadPhysical")]
         [HttpPost]
-        public async Task<IActionResult> UploadPhysical(List<IFormFile> files, string messageInput, string userInput)
+        public async Task<IActionResult> UploadPhysical(List<IFormFile> imagefiles, string messageInput, string userInput)
         {
+            var dbcs = new DbConnectionService();
+            dbcs.Open();
+            dbcs.BeginTran();
+
+            // ユーザ情報取得
             var user = new ApplicationUser();
-            user = await user.getUserAsync(userInput);
+            user = await user.getUserAsync(userInput);          
 
             var art = new Article();
             art.User = user;
             art.PostDate = DateTime.Now;
             art.Text = messageInput;
-            var result = await art.insert();
 
-            foreach (var formFile in files)
+            var contents = new List<ArticleContents>();
+            // 画像ファイル
+            foreach (var formFile in imagefiles)
             {
-                if(formFile.Length > 0)
+                var artC = new ArticleContents();
+
+                if (formFile.Length > 0 && formFile.Length < 5242880)
                 {
                     var filename = Path.GetRandomFileName();
                     var filePath = Path.Combine(Directory.GetCurrentDirectory(), Startup.StoredFilePath, filename);
@@ -107,8 +123,52 @@ namespace mock_sns_core2.Controllers
                     using (var stream = System.IO.File.Create(filePath))
                     {
                         await formFile.CopyToAsync(stream);
+
+                        stream.Seek(0, SeekOrigin.Begin);
+                        using(var reader = new BinaryReader(stream))
+                        {
+                            artC.ContentType = FileSignatureService.checkImageSignature(reader.ReadBytes(FileSignatureService.MaxImageBytes));
+                        }
                     }
+                    artC.FileName = filename;
+
+                    if(artC.ContentType == "")
+                    {
+                        return BadRequest(Json("Error:Not Match ContentType"));
+                    }
+                    contents.Add(artC);
                 }
+                else
+                {
+                    return BadRequest("Error:Maximum Image File Size is 5MB");
+                }
+            }
+
+            art.Contents = contents;
+            try
+            {
+                var result = await art.insert(dbcs);
+                if (result >= 1)
+                {
+                    dbcs.CommitTran();
+                    dbcs.Close();
+                }
+            }
+            catch (Oracle.ManagedDataAccess.Client.OracleException ex)
+            {
+                Console.WriteLine(ex);
+                dbcs.RollbackTran();
+                return BadRequest("Error:DB Access");
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine(ex);
+                dbcs.RollbackTran();
+                return BadRequest("Error:Invalid Operation");
+            }
+            finally
+            {
+                dbcs?.Close();   
             }
 
             return Ok(new { art_Id = art.Id });

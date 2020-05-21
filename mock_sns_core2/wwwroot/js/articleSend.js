@@ -5,8 +5,8 @@ var connection = new signalR.HubConnectionBuilder().withUrl("/articleHub").build
 //Disable send button until connection is established
 document.getElementById("sendButton").disabled = true;
 
-connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, message) {
-    console.log("receivemessage");
+connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, message, contents) {
+    console.log(contents);
     var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     var divParent = document.createElement("div");
     divParent.className = "media";
@@ -29,6 +29,24 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
 
     var divMsg = document.createElement("div");
     divMsg.textContent = msg;
+
+    var divContentsRow = document.createElement("div");
+    divContentsRow.className = "row";
+
+    var list = contents.split(',');
+    for (let i in list)
+    {
+        var divContentCol = document.createElement("div");
+        divContentCol.className = "col-md-6";
+
+        var imgContent = document.createElement("img");
+        imgContent.src = "/Home/Content/" + userName + "/" + list[i];
+        imgContent.className = "img-responsive img-thumbnail";
+
+        divContentCol.appendChild(imgContent);
+        divContentsRow.appendChild(divContentCol);
+    }
+    divMsg.appendChild(divContentsRow);
 
     divParent.appendChild(a);
     a.appendChild(img);
@@ -56,26 +74,34 @@ async function FetchSubmit(oFormElement) {
         .then(function (response) {
             if (response.ok) {
                 response.json().then(function (art_Id) {
-                    console.log(art_Id);
+                    console.log(art_Id.art_Id);
                     var userName = document.getElementById("userInput").value;
                     var message = document.getElementById("messageInput").value;
-                    connection.invoke("SendMessage", art_Id.toString(), userName, message).catch(function (err) {
+                    connection.invoke("SendMessage", art_Id.art_Id.toString(), userName, message).catch(function (err) {
                         return console.error(err.toString());
                     });
-                    document.getElementById("messageInput").value = "";
-
-                    var preview = document.getElementById("preview");
-                    while (preview.firstChild) {
-                        preview.removeChild(preview.firstChild);
-                    }
+                    resetForm();
                 });
             } else {
-                throw new Error('Network Error');
+                response.json().then(function (message) {
+                    resetForm();
+                    setAlert("alert-danger", message.value);
+                });
             }
         })
         .catch(function (error) {
-            console.log(error.message);
+            resetForm();
+            setAlert("alert-danger", error.message);
         });
+}
+
+function resetForm() {
+    document.getElementById("messageInput").value = "";
+    document.getElementById("image-select").value = "";
+    var preview = document.getElementById("preview");
+    while (preview.firstChild) {
+        preview.removeChild(preview.firstChild);
+    }
 }
 
 //document.getElementById("sendButton").addEventListener("click", function (event) {

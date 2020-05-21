@@ -1,6 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+<div id="alertMessage">
+
+</div>
 <br />
 <div class="container">
     <div class="row ">
@@ -10,13 +13,13 @@
         <div class="col-md-9">
             <form class="article-form" enctype="multipart/form-data" action="UploadPhysical" method="post" onsubmit="FetchSubmit(this); return false;">
                 <div class="form-group">
-                    <textarea id="messageInput" maxlength="300" class="form-control" name="messageInput"></textarea>
+                    <textarea id="messageInput" maxlength="300" rows="1" class="form-control" name="messageInput"></textarea>
                 </div>
                 <div id="preview">
                 </div>
                 <label>
                     <span class="glyphicon glyphicon-picture image-icon" aria-hidden="true">
-                        <input type="file" multiple accept=".jpg,.gif,.png,image/jpeg,image/gif,image/png" id="image-select" name="files" />
+                        <input type="file" multiple accept=".jpg,.gif,.png,image/jpeg,image/gif,image/png" id="image-select" name="imagefiles" />
                     </span>
                 </label>
                 <input type="submit" id="sendButton" class="btn btn-primary" value="投稿" />
@@ -43,6 +46,14 @@
                                 @article.User.ApplicationUserName
                             </h4>
                             <div>@article.Text</div>
+                            <div class="row">
+                                @foreach (var content in article.Contents)
+                                {
+                                <div class="col-md-6">
+                                    <img src="/Home/Content/@article.User.UserName/@content.FileName" class="img-responsive img-thumbnail" />
+                                </div>
+                                }
+                            </div>
                         </div>
                     </article>
                 }
