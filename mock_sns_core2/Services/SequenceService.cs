@@ -8,6 +8,7 @@ namespace mock_sns_core2.Services
         public enum seqType
         {
             Article,
+            ArticleContents,
         }
         public SequenceService()
         {
@@ -20,6 +21,9 @@ namespace mock_sns_core2.Services
             {
                 case seqType.Article:
                     sql = sql.Replace("{ seq_name }", "Article");
+                    break;
+                case seqType.ArticleContents:
+                    sql = sql.Replace("{ seq_name }", "ArticleContents");
                     break;
             }
 
