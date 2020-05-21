@@ -11,177 +11,165 @@ namespace mock_sns_core2.Models
 {
     public class Article
     {
-        public ulong Id { get; set; }
+        public long Id { get; set; }
         public ApplicationUser User { get; set; }
         public DateTime PostDate { get; set; }
         public string Text { get; set; }
+        public List<ArticleContents> Contents { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        private const string temp_sql = "select * from Article " +
+                " inner join \"AspNetUsers\" " +
+                " On Article.UserId = \"AspNetUsers\".\"Id\" " +
+                " left join ArticleContents " +
+                " On Article.Id = ArticleContents.ArticleId ";
 
         public Article()
         {
         }
 
-        public Article get(string sql, object param)
+        public async Task<Article> getAsync(DbConnectionService dbcs, string sql, object param)
         {
             string constr = Startup.ConnectionString;
-            using (var con = new OracleConnection(constr))
-            {
-                try
+            var result = await dbcs.GetConnection().QueryAsync<Article, ApplicationUser, ArticleContents, Article>(temp_sql + sql,
+                (article, user, articleContents) =>
                 {
-                    con.Open();
+                    article.User = user;
 
-                    var result = con.Query<Article>(sql, param);
-
-                    Article ret = null;
-                    foreach (var d in result)
+                    if (article.Contents == null)
                     {
-                        ret = d;
-                        break;
+                        article.Contents = new List<ArticleContents>();
                     }
 
-                    con.Close();
+                    if (articleContents != null)
+                    {
+                        article.Contents.Add(articleContents);
+                    }
+                    return article;
+                },
+                param);
 
-                    return ret;
-                }
-                catch (OracleException ex)
-                {
-                    Console.WriteLine(ex);
-                    throw;
-                }
-                finally
-                {
-                    con?.Close();
-                }
-
+            foreach(var a in result)
+            {
+                return a;
             }
+
+            throw new InvalidOperationException("Error:Not Found Article");
         }
 
-        public async Task<IEnumerable<Article>> search(string sql, object param)
+        public async Task<IEnumerable<Article>> search(DbConnectionService dbcs, string sql, object param)
         {
             string constr = Startup.ConnectionString;
-            using (var con = new OracleConnection(constr))
-            {
-                try
+
+            var tmpDict = new Dictionary<long, Article>();
+            var result = await dbcs.GetConnection().QueryAsync<Article, ApplicationUser, ArticleContents, Article >(temp_sql + sql,
+                (article, user, articleContents) =>
                 {
-                    con.Open();
+                    Article art;
 
-                    var result = await con.QueryAsync<Article, ApplicationUser, Article>(sql,
-                        (article, user) =>
-                        {
-                            article.User = user;
-                            return article;
-                        },
-                        param);
+                    if(!tmpDict.TryGetValue(article.Id, out art))
+                    {
+                        tmpDict.Add(article.Id, art = article);
+                    }
 
-                    con.Close();
+                    if(art.User == null)
+                    {
+                        art.User = user;
+                    }
 
-                    return result;
+                    if (art.Contents == null)
+                    {
+                        art.Contents = new List<ArticleContents>();
+                    }
 
-                }catch(OracleException ex)
-                {
-                    Console.WriteLine(ex);
-                    throw;
-                }
-                finally
-                {
-                    con?.Close();
-                }
+                    if (articleContents != null)
+                    {
+                        
+                        art.Contents.Add(articleContents);
+                    }
 
-            }
+                    return art;
+                },
+                param
+                ,splitOn: "Id");
+
+            return tmpDict.Values;
         }
 
-        public async Task<int> insert()
+        public async Task<int> insert(DbConnectionService dbcs)
         {
             string sql = "INSERT INTO Article VALUES(:Id, :UserId, :PostDate, :Text, :CreatedAt, :UpdatedAt)";
-            string constr = Startup.ConnectionString;
-            using (var con = new OracleConnection(constr))
+
+            SequenceService seq = new SequenceService();
+            var Id = seq.getNextVal(SequenceService.seqType.Article);
+            var now = DateTime.Now;
+            var result = await dbcs.GetConnection().ExecuteAsync(sql, new
             {
-                con.Open();
+                Id = Id
+                ,
+                UserId = this.User.Id
+                ,
+                PostDate = this.PostDate
+                ,
+                Text = this.Text
+                ,
+                CreatedAt = now
+                ,
+                UpdatedAt = now
+            }, dbcs.GetTransaction());
 
-                using (var tran = con.BeginTransaction())
+            if(result == 1)
+            {
+                this.Id = Decimal.ToInt64(Id);
+
+                List<Task<int>> task = new List<Task<int>>();
+                foreach (var artC in this.Contents)
                 {
-                    try
-                    {
-                        SequenceService seq = new SequenceService();
-                        var Id = seq.getNextVal(SequenceService.seqType.Article);
-                        var now = DateTime.Now;
-                        var result = await con.ExecuteAsync(sql, new
-                        {
-                            Id = Id
-                            ,
-                            UserId = this.User.Id
-                            ,
-                            PostDate = this.PostDate
-                            ,
-                            Text = this.Text
-                            ,
-                            CreatedAt = now
-                            ,
-                            UpdatedAt = now
-                        }, tran);
-
-                        tran.Commit();
-
-                        this.Id = Decimal.ToUInt64(Id);
-
-                        return result;
-                    }
-                    catch (OracleException ex)
-                    {
-                        tran.Rollback();
-                        Console.WriteLine(ex);
-                        throw;
-                    }
-                    finally
-                    {
-                        con?.Close();
-                    }
+                    artC.ArticleId = this.Id;
+                    task.Add(artC.insert(dbcs));
                 }
+                int[] retC = await Task.WhenAll(task);
+
+                foreach (var r in retC)
+                {
+                    if (r == 0)
+                    {
+                        throw new InvalidOperationException("Error:Insert ArticleContents");
+                    }
+                    result += r;
+                }
+
+                return result;
+            }
+            else
+            {
+                throw new InvalidOperationException("Error:Insert Article");
             }
         }
 
-        public async Task<int> update()
+        public async Task<int> update(DbConnectionService dbcs)
         {
             if (this.Id == 0)
             {
-                return -1;
+                throw new InvalidOperationException("Error:Id is Null");
             }
             string sql = "UPDATE Article SET Text = :Text, UpdatedAt = :UpdatedAt where Id = :Id)";
-            string constr = Startup.ConnectionString;
-            using (var con = new OracleConnection(constr))
+            var result = await dbcs.GetConnection().ExecuteAsync(sql, new
             {
-                con.Open();
+                Id = this.Id
+                ,
+                Text = this.Text
+                ,
+                UpdatedAt = DateTime.Now
+            }, dbcs.GetTransaction());
 
-                using (var tran = con.BeginTransaction())
-                {
-                    try
-                    {
-                        var result = await con.ExecuteAsync(sql, new
-                        {
-                            Id = this.Id
-                            ,
-                            Text = this.Text
-                            ,
-                            UpdatedAt = DateTime.Now
-                        }, tran);
-
-                        tran.Commit();
-
-                        return result;
-                    }
-                    catch (OracleException ex)
-                    {
-                        tran.Rollback();
-                        Console.WriteLine(ex);
-                        throw;
-                    }
-                    finally
-                    {
-                        con?.Close();
-                    }
-                }
+            if(result == 0)
+            {
+                throw new InvalidOperationException("Error:Update Article");
             }
+
+            return result;
         }
     }
 }
