@@ -6,7 +6,6 @@ var connection = new signalR.HubConnectionBuilder().withUrl("/articleHub").build
 document.getElementById("sendButton").disabled = true;
 
 connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, message, contents) {
-    console.log(contents);
     var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     var divParent = document.createElement("div");
     divParent.className = "media";
@@ -36,15 +35,18 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
     var list = contents.split(',');
     for (let i in list)
     {
-        var divContentCol = document.createElement("div");
-        divContentCol.className = "col-md-6";
+        if (list[i] != "") {
+            var divContentCol = document.createElement("div");
+            divContentCol.className = "col-md-6";
 
-        var imgContent = document.createElement("img");
-        imgContent.src = "/Home/Content/" + userName + "/" + list[i];
-        imgContent.className = "img-responsive img-thumbnail";
+            var imgContent = document.createElement("img");
+            imgContent.setAttribute("data-original", "/Home/Content/" + userName + "/" + list[i]);
+            imgContent.className = "content-preview lazy";
+            imgContent.setAttribute("onclick", "pop(this)");
 
-        divContentCol.appendChild(imgContent);
-        divContentsRow.appendChild(divContentCol);
+            divContentCol.appendChild(imgContent);
+            divContentsRow.appendChild(divContentCol);
+        }
     }
     divMsg.appendChild(divContentsRow);
 
@@ -56,6 +58,7 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
 
     var list = document.getElementById("messagesList")
     list.insertBefore(divParent, list.firstChild);
+    $('img.lazy').lazyload();
 });
 
 connection.start().then(function () {
@@ -98,7 +101,7 @@ async function FetchSubmit(oFormElement) {
 function resetForm() {
     document.getElementById("messageInput").value = "";
     document.getElementById("image-select").value = "";
-    var preview = document.getElementById("preview");
+    var preview = document.getElementById("imagepreview");
     while (preview.firstChild) {
         preview.removeChild(preview.firstChild);
     }

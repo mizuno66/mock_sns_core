@@ -151,7 +151,6 @@ namespace mock_sns_core2.Controllers
                 if (result >= 1)
                 {
                     dbcs.CommitTran();
-                    dbcs.Close();
                 }
             }
             catch (Oracle.ManagedDataAccess.Client.OracleException ex)
