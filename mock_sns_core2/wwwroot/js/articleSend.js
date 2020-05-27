@@ -85,34 +85,68 @@ connection.start().then(function () {
     return console.error(err.toString());
 });
 
-async function FetchSubmit(oFormElement) {
+function FetchSubmit(oFormElement) {
     const formData = new FormData(oFormElement);
+    const xhr = new XMLHttpRequest();
 
-    fetch(oFormElement.action, {
-        method: oFormElement.method,
-        body: formData
-    })
-        .then(function (response) {
-            if (response.ok) {
-                response.json().then(function (art_Id) {
-                    var userName = document.getElementById("userInput").value;
-                    var message = document.getElementById("messageInput").value;
-                    connection.invoke("SendMessage", art_Id.art_Id.toString(), userName, message).catch(function (err) {
-                        return console.error(err.toString());
-                    });
-                    resetForm();
-                });
-            } else {
-                response.json().then(function (message) {
-                    resetForm();
-                    setAlert("alert-danger", message.value);
-                });
-            }
-        })
-        .catch(function (error) {
-            resetForm();
-            setAlert("alert-danger", error.message);
+    xhr.open(oFormElement.method, oFormElement.action);
+
+    xhr.addEventListener('load', (evt) => {
+        // 正常終了
+        let response = JSON.parse(xhr.responseText);
+
+        var userName = document.getElementById("userInput").value;
+        var message = document.getElementById("messageInput").value;
+        connection.invoke("SendMessage", response.art_Id.toString(), userName, message).catch(function (err)
+        {
+            setAlert("alert-danger", err.toString());
+            return console.error(err.toString());
         });
+        resetForm();
+    });
+
+    xhr.addEventListener("error", (evt) => {
+        // リクエスト送信エラー
+        setAlert("alert-danger", "Network Error");
+    });
+
+    xhr.upload.addEventListener("loadstart", (evt) => {
+        // アップロード開始
+        var pg = document.getElementById("pg");
+        pg.style.visibility = "visible";
+        var pgb = document.getElementById("pgb");
+        pgb.innerText = "アップロード中"
+    });
+
+    xhr.upload.addEventListener("load", (evt) => {
+        // アップロード正常終了
+        var pgb = document.getElementById("pgb");
+        pgb.innerText = "処理中";
+    });
+
+    xhr.upload.addEventListener('progress', (evt) => {
+        // 進捗
+        let percent = (evt.loaded / evt.total * 100).toFixed(1);
+        var pgb = document.getElementById("pgb");
+        pgb.style.width = `${percent}%`;
+    });
+
+    xhr.upload.addEventListener("abort", (evt) => {
+        // アップロード中断
+        setAlert("alert-danger", "Upload Abort");
+    });
+
+    xhr.upload.addEventListener("error", (evt) => {
+        // アップロードエラー
+        setAlert("alert-danger", "Upload Error");
+    });
+
+    xhr.upload.addEventListener("timeout", (evt) => {
+        // アップロードタイムアウト
+        setAlert("alert-danger", "Upload Timeout");
+    });
+
+    xhr.send(formData);
 }
 
 function resetForm() {
@@ -126,6 +160,11 @@ function resetForm() {
     while (preview.firstChild) {
         preview.removeChild(preview.firstChild);
     }
+    var pg = document.getElementById("pg");
+    pg.style.visibility = "hidden";
+    var pgb = document.getElementById("pgb");
+    pgb.style.width = "0%";
+    pgb.innerText = "";
 }
 
 
