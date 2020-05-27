@@ -22,6 +22,16 @@ namespace mock_sns_core2.Models
         {
         }
 
+        public string getContentType()
+        {
+            return this.ContentType.Substring(0, this.ContentType.IndexOf("/"));
+        }
+
+        public string getExtension()
+        {
+            return "." + this.ContentType.Substring(this.ContentType.IndexOf("/") + 1);
+        }
+
         public async Task<IEnumerable<ArticleContents>> GetListAsync(long articleId)
         {
             string sql = "select * from ArticleContents " +

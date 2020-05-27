@@ -57,7 +57,16 @@
                                 @foreach (var content in article.Contents)
                                 {
                                     <div class="col-xs-6">
-                                        <img class="content-preview lazy" data-original="/Home/Content/@article.User.UserName/@content.FileName" onclick="pop(this)" />
+                                        @if (content.getContentType() == "image")
+                                        {
+                                            <img class="content-image-preview lazy" data-original="/contents/@article.User.UserName/@content.FileName" onclick="popImage(this)" />
+                                        }
+                                        else
+                                        {
+                                            <video class="content-video-preview" onclick="popVideo(this)" preload="auto" src="/contents/@article.User.UserName/@content.FileName/thumbnail.mp4">
+                                            </video>
+                                        }
+
                                     </div>
                                 }
                             </div>
@@ -81,7 +90,20 @@
                     <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
                 </div>
                 <div class="modal-body">
-                    <img src="" id="imagepreview" class="img-responsive" />
+                    <img src="" id="imageModalPreview" class="img-responsive" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="videomodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                </div>
+                <div class="modal-body">
+                    <video id="videoModalPreview" width="100%" height="100%" controls />
                 </div>
             </div>
         </div>
@@ -132,11 +154,23 @@
     <script src="~/js/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/articleSend.js"></script>
     <script src="~/js/preview.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- Dialog -->
-    <script type="text/javascript">function pop(self) {
-            console.log("pop");
-            $('#imagepreview').attr('src', $(self).attr('data-original'));
+    <script type="text/javascript">function popImage(self) {
+            $('#imageModalPreview').attr('src', $(self).attr('data-original'));
             $('#imagemodal').modal('show');
+        }</script>
+    <script type="text/javascript">
+        function popVideo(self) {
+            
+            if (Hls.isSupported()) {
+                var video = document.getElementById('videoModalPreview');
+                var hls = new Hls();
+
+                hls.loadSource($(self).attr('src').split("/").reverse().slice(1).reverse().join("/") + "/video.m3u8");
+                hls.attachMedia(video);
+            }
+            $('#videomodal').modal('show');
         }</script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js"></script>

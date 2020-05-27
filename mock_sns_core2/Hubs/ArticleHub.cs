@@ -20,10 +20,13 @@ namespace mock_sns_core2.Hubs
             var artC = new ArticleContents();
             var cList = await artC.GetListAsync(long.Parse(art_Id));
 
-            var contents = "";
-            contents = string.Join<string>(",", cList?.Select(c => c.FileName));
+            var imageContents = "";
+            imageContents = string.Join<string>(",", cList?.Where(c => c.getContentType() == "image").Select(c => c.FileName));
 
-            await Clients.All.SendAsync("ReceiveMessage", art_Id, userName, user.ApplicationUserName, message, contents);
+            var videoContents = "";
+            videoContents = string.Join<string>(",", cList?.Where(c => c.getContentType() == "video").Select(c => c.FileName));
+
+            await Clients.All.SendAsync("ReceiveMessage", art_Id, userName, user.ApplicationUserName, message, imageContents, videoContents);
         }
     }
 }

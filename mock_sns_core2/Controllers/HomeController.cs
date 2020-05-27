@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +19,12 @@ namespace mock_sns_core2.Controllers
     public class HomeController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private IHostingEnvironment _hostingEnviroment;
 
-        public HomeController(UserManager<ApplicationUser> userManager)
+        public HomeController(UserManager<ApplicationUser> userManager, IHostingEnvironment environment)
         {
             _userManager = userManager;
+            _hostingEnviroment = environment;
         }
 
         [Route("")]
@@ -56,12 +59,19 @@ namespace mock_sns_core2.Controllers
             return new FileContentResult(user.Photo, "image/jpeg");
         }
 
-        [Route("Content/{UserName}/{FileName}")]
-        public async Task<IActionResult> DispContentsAsync(string UserName, string fileName)
-        {
-            byte[] data = await System.IO.File.ReadAllBytesAsync(Path.Combine(Startup.StoredFilePath, fileName));
-            return new FileContentResult(data, "image/jpeg");
-        }
+        //[Route("Content/Photo/{UserName}/{FileName}")]
+        //public async Task<IActionResult> DispPhotoAsync(string UserName, string fileName)
+        //{
+        //    byte[] data = await System.IO.File.ReadAllBytesAsync(Path.Combine(Startup.StoredFilePath, UserName, fileName));
+        //    return new FileContentResult(data, "image/jpeg");
+        //}
+
+        //[Route("Content/Video/{UserName}/{FileName}")]
+        //public async Task<IActionResult> DispVideoAsync(string UserName, string fileName)
+        //{
+        //    byte[] data = await System.IO.File.ReadAllBytesAsync(Path.Combine(Startup.StoredFilePath, UserName, fileName, "video.m3u8"));
+        //    return new FileContentResult(data, "application/vnd.apple.mpegurl");
+        //}
 
         [Route("About")]
         public IActionResult About()
@@ -94,7 +104,8 @@ namespace mock_sns_core2.Controllers
 
         [Route("UploadPhysical")]
         [HttpPost]
-        public async Task<IActionResult> UploadPhysical(List<IFormFile> imagefiles, string messageInput, string userInput)
+        [Authorize]
+        public async Task<IActionResult> UploadPhysical(List<IFormFile> imagefiles,List<IFormFile> videofiles, string messageInput, string userInput)
         {
             var dbcs = new DbConnectionService();
             dbcs.Open();
@@ -104,10 +115,21 @@ namespace mock_sns_core2.Controllers
             var user = new ApplicationUser();
             user = await user.getUserAsync(userInput);          
 
+            if(messageInput == null && imagefiles.Count == 0 && videofiles.Count == 0)
+            {
+                return BadRequest(Json("Error:入力または、選択をしてください。"));
+            }
             var art = new Article();
             art.User = user;
             art.PostDate = DateTime.Now;
             art.Text = messageInput;
+
+            // フォルダ作成
+            var contentDir = Path.Combine(_hostingEnviroment.WebRootPath, Startup.StoredFilePath, user.UserName);
+            if (!Directory.Exists(contentDir))
+            {
+                Directory.CreateDirectory(contentDir);
+            }
 
             var contents = new List<ArticleContents>();
             // 画像ファイル
@@ -118,7 +140,7 @@ namespace mock_sns_core2.Controllers
                 if (formFile.Length > 0 && formFile.Length < 5242880)
                 {
                     var filename = Path.GetRandomFileName();
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), Startup.StoredFilePath, filename);
+                    var filePath = Path.Combine(contentDir, filename);
 
                     using (var stream = System.IO.File.Create(filePath))
                     {
@@ -130,21 +152,61 @@ namespace mock_sns_core2.Controllers
                             artC.ContentType = FileSignatureService.checkImageSignature(reader.ReadBytes(FileSignatureService.MaxImageBytes));
                         }
                     }
-                    artC.FileName = filename;
 
                     if(artC.ContentType == "")
                     {
                         return BadRequest(Json("Error:Not Match ContentType"));
                     }
+
+                    System.IO.File.Move(filePath, filePath + artC.getExtension());
+                    artC.FileName = filename + artC.getExtension();
+                    
                     contents.Add(artC);
                 }
                 else
                 {
-                    return BadRequest("Error:Maximum Image File Size is 5MB");
+                    return BadRequest(Json("Error:Maximum Image File Size is 5MB"));
+                }
+            }
+
+            // 動画ファイル
+            foreach(var formFile in videofiles)
+            {
+                var artC = new ArticleContents();
+
+                if(formFile.Length > 0 && formFile.Length < 536870912)
+                {
+                    var filename = Path.GetRandomFileName();
+                    // ファイル名のディレクトリを作成
+                    Directory.CreateDirectory(Path.Combine(contentDir, filename));
+                    var filePath = Path.Combine(contentDir,filename, filename);
+
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await formFile.CopyToAsync(stream);
+
+                        stream.Seek(0, SeekOrigin.Begin);
+                        using (var reader = new BinaryReader(stream))
+                        {
+                            artC.ContentType = FileSignatureService.checkVideoSignature(reader.ReadBytes(FileSignatureService.MaxVideoBytes));
+                        }
+                    }
+
+                    HLSConvertService.convertHLS(filePath);
+                    HLSConvertService.createThumbnail(filePath);
+
+                    artC.FileName = filename;
+
+                    if (artC.ContentType == "")
+                    {
+                        return BadRequest(Json("Error:Not Match ContentType"));
+                    }
+                    contents.Add(artC);
                 }
             }
 
             art.Contents = contents;
+
             try
             {
                 var result = await art.insert(dbcs);
@@ -157,13 +219,13 @@ namespace mock_sns_core2.Controllers
             {
                 Console.WriteLine(ex);
                 dbcs.RollbackTran();
-                return BadRequest("Error:DB Access");
+                return BadRequest(Json("Error:DB Access"));
             }
             catch (InvalidOperationException ex)
             {
                 Console.WriteLine(ex);
                 dbcs.RollbackTran();
-                return BadRequest("Error:Invalid Operation");
+                return BadRequest(Json("Error:Invalid Operation"));
             }
             finally
             {

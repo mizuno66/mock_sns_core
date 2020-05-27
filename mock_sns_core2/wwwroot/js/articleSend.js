@@ -5,7 +5,7 @@ var connection = new signalR.HubConnectionBuilder().withUrl("/articleHub").build
 //Disable send button until connection is established
 document.getElementById("sendButton").disabled = true;
 
-connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, message, contents) {
+connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, message, imageContents, videoContents) {
     var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     var divParent = document.createElement("div");
     divParent.className = "media";
@@ -32,7 +32,7 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
     var divContentsRow = document.createElement("div");
     divContentsRow.className = "row";
 
-    var list = contents.split(',');
+    var list = imageContents.split(',');
     for (let i in list)
     {
         if (list[i] != "") {
@@ -40,14 +40,32 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
             divContentCol.className = "col-md-6";
 
             var imgContent = document.createElement("img");
-            imgContent.setAttribute("data-original", "/Home/Content/" + userName + "/" + list[i]);
-            imgContent.className = "content-preview lazy";
-            imgContent.setAttribute("onclick", "pop(this)");
+            imgContent.setAttribute("data-original", "/Contents/" + userName + "/" + list[i]);
+            imgContent.className = "content-image-preview lazy";
+            imgContent.setAttribute("onclick", "popImage(this)");
 
             divContentCol.appendChild(imgContent);
             divContentsRow.appendChild(divContentCol);
         }
     }
+
+    list = videoContents.split(',');
+    for (let i in list) {
+        if (list[i] != "") {
+            var divContentCol = document.createElement("div");
+            divContentCol.className = "col-md-6";
+
+            var videoContent = document.createElement("video");
+            videoContent.src = "/Contents/" + userName + "/" + list[i] + "/thumbnail.mp4" ;
+            videoContent.className = "content-video-preview";
+            videoContent.setAttribute("onclick", "popVideo(this)");
+
+            divContentCol.appendChild(videoContent);
+            divContentsRow.appendChild(divContentCol);
+        }
+    }
+
+
     divMsg.appendChild(divContentsRow);
 
     divParent.appendChild(a);
@@ -77,7 +95,6 @@ async function FetchSubmit(oFormElement) {
         .then(function (response) {
             if (response.ok) {
                 response.json().then(function (art_Id) {
-                    console.log(art_Id.art_Id);
                     var userName = document.getElementById("userInput").value;
                     var message = document.getElementById("messageInput").value;
                     connection.invoke("SendMessage", art_Id.art_Id.toString(), userName, message).catch(function (err) {
@@ -105,37 +122,10 @@ function resetForm() {
     while (preview.firstChild) {
         preview.removeChild(preview.firstChild);
     }
+    preview = document.getElementById("videopreview");
+    while (preview.firstChild) {
+        preview.removeChild(preview.firstChild);
+    }
 }
 
-//document.getElementById("sendButton").addEventListener("click", function (event) {
-//    var formData = new FormData();
-//    var fileDom = document.querySelector("input[type='file'][multiple]");
-//    console.log(fileDom.files);
 
-//    formData.append('files', fileDom.files);
-
-//    fetch('UploadPhysical', {
-//        method: 'POST',
-//        body: formData
-//    })
-//        .then(function (response) {
-//            if (response.ok) {
-//                var res = response.json();
-//                console.log("response ok")
-//                console.log(res.count);
-//            } else {
-//                throw new Error('Network Error');
-//            }
-//        })
-//        .catch(function (error) {
-//            console.log(error.message);
-//        });
-
-//    var userName = document.getElementById("userInput").value;
-//    var message = document.getElementById("messageInput").value;
-//    connection.invoke("SendMessage", userName, message).catch(function (err) {
-//        return console.error(err.toString());
-//    });
-//    document.getElementById("messageInput").value = "";
-//    event.preventDefault();
-//});

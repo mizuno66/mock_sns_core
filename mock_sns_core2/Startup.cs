@@ -14,6 +14,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using mock_sns_core2.Hubs;
 using mock_sns_core2.Models;
+using System.IO;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace mock_sns_core2
 {
@@ -67,7 +70,15 @@ namespace mock_sns_core2
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
+            var contentType = new FileExtensionContentTypeProvider();
+            contentType.Mappings[".m3u8"] = "application/x-mpegURl";
+            contentType.Mappings[".ts"] = "video/MP2T";
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                ContentTypeProvider = contentType
+            });
+
             app.UseCookiePolicy();
 
             app.UseAuthentication();
