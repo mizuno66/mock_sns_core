@@ -43,6 +43,7 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
             imgContent.setAttribute("data-original", "/Contents/" + userName + "/" + list[i]);
             imgContent.className = "content-image-preview lazy";
             imgContent.setAttribute("onclick", "popImage(this)");
+            imgContent.setAttribute("asp-append-version", "true");
 
             divContentCol.appendChild(imgContent);
             divContentsRow.appendChild(divContentCol);
@@ -59,6 +60,7 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
             videoContent.src = "/Contents/" + userName + "/" + list[i] + "/thumbnail.mp4" ;
             videoContent.className = "content-video-preview";
             videoContent.setAttribute("onclick", "popVideo(this)");
+            videoContent.setAttribute("asp-append-version", "true");
 
             divContentCol.appendChild(videoContent);
             divContentsRow.appendChild(divContentCol);

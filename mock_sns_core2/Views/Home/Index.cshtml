@@ -57,18 +57,18 @@
                             <h4 class="media-heading">
                                 @article.User.ApplicationUserName
                             </h4>
-                            <div>@article.Text</div>
+                            <pre>@article.Text</pre>
                             <div class="row">
                                 @foreach (var content in article.Contents)
                                 {
                                     <div class="col-xs-6">
                                         @if (content.getContentType() == "image")
                                         {
-                                            <img class="content-image-preview lazy" data-original="/contents/@article.User.UserName/@content.FileName" onclick="popImage(this)" />
+                                            <img class="content-image-preview lazy" data-original="/contents/@article.User.UserName/@content.FileName" onclick="popImage(this)" asp-append-version="true" />
                                         }
                                         else
                                         {
-                                            <video class="content-video-preview" onclick="popVideo(this)" preload="metadata" src="/contents/@article.User.UserName/@content.FileName/thumbnail.mp4">
+                                            <video class="content-video-preview" onclick="popVideo(this)" preload="metadata" src="/contents/@article.User.UserName/@content.FileName/thumbnail.mp4" asp-append-version="true">
                                             </video>
                                         }
 
@@ -156,10 +156,10 @@
     *@
 </div>
 @section Scripts{
-    <script src="~/js/signalr/dist/browser/signalr.js"></script>
-    <script src="~/js/articleSend.js"></script>
-    <script src="~/js/preview.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="~/js/signalr/dist/browser/signalr.js" asp-append-version="true"></script>
+    <script src="~/js/articleSend.js" asp-append-version="true"></script>
+    <script src="~/js/preview.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest" asp-append-version="true"></script>
     <!-- Dialog -->
     <script type="text/javascript">function popImage(self) {
             $('#imageModalPreview').attr('src', $(self).attr('data-original'));
@@ -178,7 +178,7 @@
             $('#videomodal').modal('show');
         }</script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js" asp-append-version="true"></script>
     <script type="text/javascript">$(function () {
             $('.scroll').jscroll({
                 loadingHtml: '<p style="text-align:center"><img src="/images/loading.gif" /></p>',
@@ -201,9 +201,8 @@
             });
         });</script>
 
-
     <!-- LazyLoad -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js" asp-append-version="true"></script>
     <script type="text/javascript">
         $('img.lazy').lazyload();
     </script>

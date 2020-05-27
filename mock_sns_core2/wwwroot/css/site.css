@@ -37,6 +37,13 @@ body {
     }
 }
 
+/* pre */
+pre {
+    background-color: #FFFFFF;
+    border:none;
+    font-size: 14px;
+}
+
 /* 画像 */
 .userphoto {
     border-radius: 50%;
