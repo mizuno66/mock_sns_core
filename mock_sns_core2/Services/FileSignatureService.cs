@@ -67,5 +67,18 @@ namespace mock_sns_core2.Services
 
             return "";
         }
+
+        public static string checkVideoSignature(byte[] argBytes)
+        {
+            foreach (var (id, list) in _videoSignature)
+            {
+                if (list.Any(bytes => argBytes.Take(bytes.Length).SequenceEqual(bytes)))
+                {
+                    return id;
+                }
+            }
+
+            return "";
+        }
     }
 }
