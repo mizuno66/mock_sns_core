@@ -9,6 +9,7 @@ namespace mock_sns_core2.Services
         {
             Article,
             ArticleContents,
+            FollowUsers,
         }
         public SequenceService()
         {
@@ -24,6 +25,9 @@ namespace mock_sns_core2.Services
                     break;
                 case seqType.ArticleContents:
                     sql = sql.Replace("{ seq_name }", "ArticleContents");
+                    break;
+                case seqType.FollowUsers:
+                    sql = sql.Replace("{ seq_name }", "FollowUsers");
                     break;
             }
 

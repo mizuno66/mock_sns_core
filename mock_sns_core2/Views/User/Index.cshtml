@@ -1,0 +1,226 @@
+﻿@{
+    ViewData["Title"] = "User Page";
+}
+<div id="alertMessage">
+
+</div>
+<br />
+<div class="container">
+    @{
+        var user = ViewBag.user;
+    }
+    <div class="row ">
+        <div class="col-xs-2">
+            <img src="/Home/UserPhoto/@user.UserName" class="userphoto" />
+        </div>
+        <div class="col-xs-8">
+            <h4>@user.ApplicationUserName</h4>
+            <h5>@@@user.UserName</h5>
+        </div>
+        <div class="col-xs-2">
+
+            @if (ViewBag.mypage)
+            {
+                <button type="submit" class="btn btn-primary">プロフィール編集</button>
+            }
+            else
+            {
+        <form action="/User/FollowUser" method="post" class="FollowForm" onsubmit="FollowSubmit(this); return false;">
+            <input type="hidden" name="userName" value="@user.UserName" />
+            <input type="hidden" id="isFollow" name="isFollow" value="@ViewBag.follow" />
+            @if (ViewBag.follow == "true")
+            {
+                <button type="submit" id="followBtn" class="btn btn-primary btn-lg">フォロー中</button>
+            }
+            else
+            {
+                <button type = "submit" id = "followBtn" class="btn btn-primary btn-lg">フォロー</button>
+            }
+            </form>
+            }
+
+        </div>
+    </div>
+    <hr />
+    @{
+        var list = ViewBag.list;
+        //var active = "";
+    }
+    <div class="row">
+        <div class="col-6">
+            <div id="messagesList" class="scroll">
+                @foreach (var article in list)
+                {
+                    <article class="media">
+                        <div class="media-left">
+                            <img data-original="/Home/UserPhoto/@article.User.UserName" class="userphoto lazy" />
+                        </div>
+                        <div class="media-body" id=@article.Id>
+                            <h4 class="media-heading">
+                                @article.User.ApplicationUserName
+                            </h4>
+                            <pre>@article.Text</pre>
+                            <div class="row">
+                                @foreach (var content in article.Contents)
+                                {
+                                    <div class="col-xs-6">
+                                        @if (content.getContentType() == "image")
+                                        {
+                                            <img class="content-image-preview lazy" data-original="/contents/@article.User.UserName/@content.FileName" asp-append-version="true" />
+                                        }
+                                        else
+                                        {
+                                            <video class="content-video-preview" preload="metadata" src="/contents/@article.User.UserName/@content.FileName/thumbnail.mp4" asp-append-version="true">
+                                            </video>
+                                        }
+
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
+                <nav>
+                    @if (list.HasNextPage)
+                    {
+                        <a asp-action="Index" asp-controller="Home" asp-route-pageNum="@(list.Index + 1)" class="next">次</a>
+                    }
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                </div>
+                <div class="modal-body">
+                    <img src="" id="imageModalPreview" class="img-responsive" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="videomodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                </div>
+                <div class="modal-body">
+                    <video id="videoModalPreview" width="100%" height="100%" controls />
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+@section Scripts{
+    @*
+        <script src="~/js/signalr/dist/browser/signalr.js" asp-append-version="true"></script>
+        <script src="~/js/articleSend.js" asp-append-version="true"></script>
+    *@
+
+    <script type="text/javascript">
+        var isFollowDom = document.getElementById("isFollow");
+        var followBtn = document.getElementById("followBtn");
+
+        if (followBtn != undefined) {
+            followBtn.addEventListener("mouseover", (e) => {
+                if (isFollowDom.value == "true") {
+                    followBtn.className = "btn btn-danger btn-lg";
+                    followBtn.innerText = "フォロー解除";
+                }
+            });
+
+            followBtn.addEventListener("mouseout", (e) => {
+                if (isFollowDom.value == "true") {
+                    followBtn.className = "btn btn-primary btn-lg";
+                    followBtn.innerText = "フォロー中";
+                }
+            });
+        }
+
+        async function FollowSubmit(self) {
+            const formData = new FormData(self);
+
+            fetch(self.action, {
+                method: self.method,
+                body: formData
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        response.json().then(function (isFollow) {
+                            isFollowDom.value = isFollow.isFollow;
+
+
+                            if (isFollow.isFollow == "true") {
+                                followBtn.innerText = "フォロー中";
+                            } else {
+                                followBtn.innerText = "フォロー";
+                            }
+
+                        });
+                    } else {
+                        response.json().then(function (message) {
+                            setAlert("alert-danger", message.value);
+                        });
+                    }
+                })
+                .catch(function (error) {
+                    setAlert("alert-danger", error.message);
+                });
+        }</script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest" asp-append-version="true"></script>
+    <!-- Dialog -->
+    <script type="text/javascript">function popImage(self) {
+            $('#imageModalPreview').attr('src', $(self).attr('data-original'));
+            $('#imagemodal').modal('show');
+        }</script>
+    <script type="text/javascript">function popVideo(self) {
+
+            if (Hls.isSupported()) {
+                var video = document.getElementById('videoModalPreview');
+                var hls = new Hls();
+
+                hls.loadSource($(self).attr('src').split("/").reverse().slice(1).reverse().join("/") + "/video.m3u8");
+                hls.attachMedia(video);
+            }
+            $('#videomodal').modal('show');
+        }</script>
+    <script type="text/javascript">function addClickEvent(dom) {
+            dom.addEventListener("click", e => {
+                console.log(e.target.tagName);
+                if (e.target.tagName == "VIDEO") {
+                    popVideo(e.target);
+                } else if (e.target.tagName == "IMG") {
+                    popImage(e.target);
+                }
+            });
+        }
+
+        var dom = document.getElementsByTagName("article");
+        for (let i = 0; i < dom.length; i++) {
+            addClickEvent(dom[i]);
+        }</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js" asp-append-version="true"></script>
+    <script type="text/javascript">$(function () {
+            $('.scroll').jscroll({
+                loadingHtml: '<p style="text-align:center"><img src="/images/loading.gif" /></p>',
+                contentSelector: '.scroll',
+                nextSelector: 'a.next',
+                autoTrigger: true,
+                callback: function () {
+                    $('img.lazy').lazyload();
+                }
+            })
+        });</script>
+
+    <!-- LazyLoad -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js" asp-append-version="true"></script>
+    <script type="text/javascript">$('img.lazy').lazyload();</script>
+}
+

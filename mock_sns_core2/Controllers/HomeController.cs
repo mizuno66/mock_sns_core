@@ -37,7 +37,7 @@ namespace mock_sns_core2.Controllers
 
             ViewData["pageNum"] = pageNum ?? 1;
 
-            string sql = " where Article.UserId = :UserId " +
+            string sql = " where UserId In (select FollowUserId from FollowUsers Where UserId = :UserId) " +
                 " order by PostDate desc";
 
             var dbcs = new DbConnectionService();

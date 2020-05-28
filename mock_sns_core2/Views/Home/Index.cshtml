@@ -1,10 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
-<div id="alertMessage">
-
-</div>
-<br />
 <div class="container">
     <div class="row ">
         <div class="col-xs-2">
@@ -38,8 +34,8 @@
                 <div id="pgb" class="progress-bar bg-success" role="progressbar"></div>
             </div>
         </div>
-        <hr />
     </div>
+    <hr />
     @{
         var list = ViewBag.list;
         //var active = "";
@@ -54,9 +50,11 @@
                             <img data-original="/Home/UserPhoto/@article.User.UserName" class="userphoto lazy" />
                         </div>
                         <div class="media-body" id=@article.Id>
-                            <h4 class="media-heading">
-                                @article.User.ApplicationUserName
-                            </h4>
+                            <a href="/User/@article.User.UserName">
+                                <h4 class="media-heading">
+                                    @article.User.ApplicationUserName
+                                </h4>
+                            </a>
                             <pre>@article.Text</pre>
                             <div class="row">
                                 @foreach (var content in article.Contents)
@@ -181,7 +179,7 @@
     <script type="text/javascript">
         function addClickEvent(dom) {
             dom.addEventListener("click", e => {
-                console.log(e.target.tagName);
+
                 if (e.target.tagName == "VIDEO") {
                     popVideo(e.target);
                 } else if(e.target.tagName == "IMG") {
