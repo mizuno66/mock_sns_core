@@ -51,7 +51,7 @@
                 {
                     <article class="media">
                         <div class="media-left">
-                            <img src="/Home/UserPhoto/@article.User.UserName" class="userphoto" />
+                            <img data-original="/Home/UserPhoto/@article.User.UserName" class="userphoto lazy" />
                         </div>
                         <div class="media-body" id=@article.Id>
                             <h4 class="media-heading">
@@ -64,11 +64,11 @@
                                     <div class="col-xs-6">
                                         @if (content.getContentType() == "image")
                                         {
-                                            <img class="content-image-preview lazy" data-original="/contents/@article.User.UserName/@content.FileName" onclick="popImage(this)" asp-append-version="true" />
+                                            <img class="content-image-preview lazy" data-original="/contents/@article.User.UserName/@content.FileName" asp-append-version="true" />
                                         }
                                         else
                                         {
-                                            <video class="content-video-preview" onclick="popVideo(this)" preload="metadata" src="/contents/@article.User.UserName/@content.FileName/thumbnail.mp4" asp-append-version="true">
+                                            <video class="content-video-preview" preload="metadata" src="/contents/@article.User.UserName/@content.FileName/thumbnail.mp4" asp-append-version="true">
                                             </video>
                                         }
 
@@ -161,7 +161,8 @@
     <script src="~/js/preview.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest" asp-append-version="true"></script>
     <!-- Dialog -->
-    <script type="text/javascript">function popImage(self) {
+    <script type="text/javascript">
+        function popImage(self) {
             $('#imageModalPreview').attr('src', $(self).attr('data-original'));
             $('#imagemodal').modal('show');
         }</script>
@@ -177,6 +178,23 @@
             }
             $('#videomodal').modal('show');
         }</script>
+    <script type="text/javascript">
+        function addClickEvent(dom) {
+            dom.addEventListener("click", e => {
+                console.log(e.target.tagName);
+                if (e.target.tagName == "VIDEO") {
+                    popVideo(e.target);
+                } else if(e.target.tagName == "IMG") {
+                    popImage(e.target);
+                }
+            }); 
+        }
+
+        var dom = document.getElementsByTagName("article");
+        for (let i = 0; i < dom.length; i++) {
+            addClickEvent(dom[i]);
+        }
+    </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js" asp-append-version="true"></script>
     <script type="text/javascript">$(function () {
