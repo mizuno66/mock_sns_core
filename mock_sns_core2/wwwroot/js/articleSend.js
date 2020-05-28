@@ -10,13 +10,15 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
     var divParent = document.createElement("div");
     divParent.className = "media";
 
+    addClickEvent(divParent);
+
     var a = document.createElement("a");
     a.className = "media-left";
     a.href = "#";
 
     var img = document.createElement("img");
-    img.src = "/Home/UserPhoto/" + userName;
-    img.className = "userphoto";
+    img.setAttribute("data-original", "/Home/UserPhoto/" + userName);
+    img.className = "userphoto lazy";
 
     var divBody = document.createElement("div");
     divBody.className = "media-body";
@@ -42,7 +44,6 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
             var imgContent = document.createElement("img");
             imgContent.setAttribute("data-original", "/Contents/" + userName + "/" + list[i]);
             imgContent.className = "content-image-preview lazy";
-            imgContent.setAttribute("onclick", "popImage(this)");
             imgContent.setAttribute("asp-append-version", "true");
 
             divContentCol.appendChild(imgContent);
@@ -59,7 +60,6 @@ connection.on("ReceiveMessage", function (id, userName, ApplicationUserName, mes
             var videoContent = document.createElement("video");
             videoContent.src = "/Contents/" + userName + "/" + list[i] + "/thumbnail.mp4" ;
             videoContent.className = "content-video-preview";
-            videoContent.setAttribute("onclick", "popVideo(this)");
             videoContent.setAttribute("asp-append-version", "true");
 
             divContentCol.appendChild(videoContent);
